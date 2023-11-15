@@ -6,6 +6,7 @@ const { Pool } = require('pg');
 const pool = require('./database');
 const validarRut = require('./rutValidator');
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
 
 // Crear una instancia de Express
 const app = express();
@@ -98,9 +99,21 @@ app.post('/registro-o-inicio-sesion', async (req, res) => {
     const match = await bcrypt.compare(password, usuario.password);
 
     if (match) {
+      // Crea un token para almacenar y manejar la sesion del usuario en el front
+      const token = jwt.sign({
+          userRut: usuario.rut,
+          tipoId: usuario.tipo_id
+        },
+        'LKNNIAJ90QE209JQNIOASD0820J1390HIOASDVI',
+        { expiresIn: "2h" }
+      );  
       // Credenciales válidas, permitir el inicio de sesión
       req.session.usuario = usuario;
-      return res.status(200).json({ mensaje: 'Inicio de sesión exitoso' });
+      return res.status(200).json({ 
+        mensaje: 'Inicio de sesión exitoso',
+        token: token, 
+        rut: usuario?.rut
+      });
     } else {
       // Contraseña incorrecta
       return res.status(401).json({ mensaje: 'Credenciales incorrectas' });
@@ -124,7 +137,22 @@ app.post('/registro-o-inicio-sesion', async (req, res) => {
     // Establecer la sesión del usuario recién registrado
     req.session.usuario = nuevoUsuario;
 
-    res.status(201).json({ mensaje: 'Usuario registrado con éxito y sesión iniciada' });
+    if (nuevoUsuario) {
+      const token = jwt.sign({
+          userRut: nuevoUsuario.rut,
+          tipoId: nuevoUsuario.tipo_id
+        },
+        'LKNNIAJ90QE209JQNIOASD0820J1390HIOASDVI',
+        { expiresIn: "2h" }
+      ); 
+      res.status(201).json({ 
+        mensaje: 'Usuario registrado con éxito y sesión iniciada',
+        token: token,
+        rut: nuevoUsuario?.rut
+      });
+    }
+
+    // res.status(201).json({ mensaje: 'Usuario registrado con éxito y sesión iniciada' });
   }
 });
 
