@@ -126,8 +126,14 @@ app.post('/registro-o-inicio-sesion', async (req, res) => {
 
     // Generar un hash de la contraseña antes de almacenarla en la base de datos
     const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Insertar el nuevo usuario en la base de datos con la contraseña hasheada
+    /* 
+      Insertar el nuevo usuario en la base de datos con la contraseña hasheada
+      rut: es el rut que se ingresa en el front
+      tipo_id:
+      1 = admin user
+      2 = normal user
+      hashedPassword: contraseña hasheada para mas seguridad
+    */
     await pool.query('INSERT INTO users (rut, tipo_id, password) VALUES ($1, $2, $3)', [rut, 1, hashedPassword]);
 
     // Obtener el usuario recién registrado
@@ -151,8 +157,6 @@ app.post('/registro-o-inicio-sesion', async (req, res) => {
         rut: nuevoUsuario?.rut
       });
     }
-
-    // res.status(201).json({ mensaje: 'Usuario registrado con éxito y sesión iniciada' });
   }
 });
 
