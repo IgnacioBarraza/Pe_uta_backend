@@ -20,7 +20,7 @@ app.use(cors());
 app.post('/evaluaciones', async (req, res) => {
   try {
     // Extraer los datos de la evaluación desde el cuerpo de la solicitud
-    const { rut, grupo_id, criterio_id, puntuacion } = req.body;
+    const { rut, grupo_id, puntuaciones, } = req.body;
 
     // Verificar si el usuario ya ha evaluado el grupo específico
     const evaluacionExistente = await pool.query('SELECT * FROM evaluaciones WHERE users_id = (SELECT id FROM users WHERE rut = $1) AND grupo_id = $2', [rut, grupo_id]);
@@ -42,11 +42,16 @@ app.post('/evaluaciones', async (req, res) => {
       userId = usuarioExistente.rows[0].id;
     }
 
-    // Insertar la evaluación en la base de datos
-    await pool.query('INSERT INTO evaluaciones (users_id, grupo_id, criterio_id, puntuacion) VALUES ($1, $2, $3, $4)', [userId, grupo_id, criterio_id, puntuacion]);
+    // Insertar las evaluaciones en la base de datos
+    for (let i = 0; i < puntuaciones.length; i++) {
+      const puntuacion = puntuaciones[i];
+      const criterio_id = i+1;
+
+      await pool.query('INSERT INTO evaluaciones (users_id, grupo_id, criterio_id, puntuacion) VALUES ($1, $2, $3, $4)', [userId, grupo_id, criterio_id, puntuacion]);
+    }
 
     // Enviar una respuesta exitosa
-    res.status(201).json({ mensaje: 'Evaluación realizada con éxito' });
+    res.status(201).json({ mensaje: 'Evaluaciones realizadas con éxito' });
   } catch (error) {
     console.error('Error al realizar la evaluación', error);
     res.status(500).json({ mensaje: 'Error interno del servidor' });
@@ -102,7 +107,8 @@ app.post('/registro-o-inicio-sesion', async (req, res) => {
       // Crea un token para almacenar y manejar la sesion del usuario en el front
       const token = jwt.sign({
           userRut: usuario.rut,
-          tipoId: usuario.tipo_id
+          tipoId: usuario.tipo_id,
+          userID: usuario.id
         },
         'LKNNIAJ90QE209JQNIOASD0820J1390HIOASDVI',
         { expiresIn: "2h" }
@@ -112,7 +118,8 @@ app.post('/registro-o-inicio-sesion', async (req, res) => {
       return res.status(200).json({ 
         mensaje: 'Inicio de sesión exitoso',
         token: token, 
-        rut: usuario?.rut
+        rut: usuario?.rut,
+        userID: usuario?.id
       });
     } else {
       // Contraseña incorrecta
@@ -146,7 +153,8 @@ app.post('/registro-o-inicio-sesion', async (req, res) => {
     if (nuevoUsuario) {
       const token = jwt.sign({
           userRut: nuevoUsuario.rut,
-          tipoId: nuevoUsuario.tipo_id
+          tipoId: nuevoUsuario.tipo_id,
+          userID: nuevoUsuario.id
         },
         'LKNNIAJ90QE209JQNIOASD0820J1390HIOASDVI',
         { expiresIn: "2h" }
@@ -154,7 +162,8 @@ app.post('/registro-o-inicio-sesion', async (req, res) => {
       res.status(201).json({ 
         mensaje: 'Usuario registrado con éxito y sesión iniciada',
         token: token,
-        rut: nuevoUsuario?.rut
+        rut: nuevoUsuario?.rut,
+        userID: nuevoUsuario?.id
       });
     }
   }
