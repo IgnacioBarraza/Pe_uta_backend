@@ -176,6 +176,13 @@ app.get('/usuarios', async (req, res) => {
   res.status(200).json(usuarios.rows);
 });
 
+app.get('/asignaturas', async (req, res) => {
+  // Consultar la lista de usuarios desde la base de datos
+  const asignaturas = await pool.query('SELECT * FROM asignaturas');
+
+  res.status(200).json(asignaturas.rows);
+});
+
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
