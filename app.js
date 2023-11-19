@@ -162,12 +162,14 @@ app.post('/registro-o-inicio-sesion', async (req, res) => {
       );  
       // Credenciales válidas, permitir el inicio de sesión
       req.session.usuario = usuario;
-      return res.status(200).json({ 
-        mensaje: 'Inicio de sesión exitoso',
-        token: token, 
-        rut: usuario?.rut,
-        userID: usuario?.id
-      });
+      const gruposEvaluados = await pool.query('SELECT DISTINCT grupo_id FROM evaluaciones WHERE users_id = $1', [usuario.id]);
+      return res.status(200).json({
+          mensaje: 'Inicio de sesión exitoso',
+          token: token,
+          rut: usuario?.rut,
+          userID: usuario?.id,
+          gruposEvaluados: gruposEvaluados.rows
+        });
     } else {
       // Contraseña incorrecta
       return res.status(401).json({ mensaje: 'Credenciales incorrectas' });
@@ -210,7 +212,8 @@ app.post('/registro-o-inicio-sesion', async (req, res) => {
         mensaje: 'Usuario registrado con éxito y sesión iniciada',
         token: token,
         rut: nuevoUsuario?.rut,
-        userID: nuevoUsuario?.id
+        userID: nuevoUsuario?.id,
+        gruposEvaluados: []
       });
     }
   }
