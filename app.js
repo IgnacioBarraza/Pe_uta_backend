@@ -6,6 +6,8 @@ const { Pool } = require('pg');
 const pool = require('./database');
 const validarRut = require('./rutValidator');
 const cors = require('cors');
+const ExcelJS = require('exceljs');
+require('dotenv').config();
 const jwt = require('jsonwebtoken');
 
 // Crear una instancia de Express
@@ -59,15 +61,60 @@ app.post('/evaluaciones', async (req, res) => {
 });
 
 // Ruta para obtener información de evaluaciones, usuarios, grupos y criterios
-app.get('/evaluaciones-info', async (req, res) => {
+app.post('/export', async (req, res) => {
   try {
-    // Consultar la información de evaluaciones, usuarios, grupos y criterios
-    const resultado = await pool.query(
-      'SELECT users.rut, grupos.nombre AS nombre_grupo, criterios.nombre AS nombre_criterio, evaluaciones.puntuacion FROM evaluaciones JOIN users ON evaluaciones.users_id = users.id JOIN grupos ON evaluaciones.grupo_id = grupos.id JOIN criterios ON evaluaciones.criterio_id = criterios.id'
-    );
+    const tipo = req.body.tipo;
 
-    // Enviar el resultado como respuesta
-    res.status(200).json(resultado.rows);
+    // Verificar si el tipo es igual a 1
+    if (tipo === 1) {
+      // Consultar la información de evaluaciones, usuarios, grupos y criterios
+      const resultado = await pool.query(
+        'SELECT ' +
+        'grupos.nombre AS nombre_grupo, ' +
+        'AVG(CASE WHEN criterios.id = 1 THEN evaluaciones.puntuacion ELSE NULL END) AS avg_criterio_1, ' +
+        'AVG(CASE WHEN criterios.id = 2 THEN evaluaciones.puntuacion ELSE NULL END) AS avg_criterio_2, ' +
+        'AVG(CASE WHEN criterios.id = 3 THEN evaluaciones.puntuacion ELSE NULL END) AS avg_criterio_3, ' +
+        'AVG(CASE WHEN criterios.id = 4 THEN evaluaciones.puntuacion ELSE NULL END) AS avg_criterio_4, ' +
+        'AVG(CASE WHEN criterios.id = 5 THEN evaluaciones.puntuacion ELSE NULL END) AS avg_criterio_5, ' +
+        'AVG(evaluaciones.puntuacion) AS avg_total ' +
+        'FROM evaluaciones ' +
+        'JOIN grupos ON evaluaciones.grupo_id = grupos.id ' +
+        'JOIN criterios ON evaluaciones.criterio_id = criterios.id ' +
+        'GROUP BY grupos.nombre'
+      );
+
+      // Crear un nuevo libro de Excel y configurar la hoja de trabajo
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Evaluaciones');
+
+      // Definir encabezados
+      worksheet.addRow(['Nombre del Grupo', 'Promedio Criterio 1', 'Promedio Criterio 2', 'Promedio Criterio 3', 'Promedio Criterio 4', 'Promedio Criterio 5', 'Promedio Total']);
+
+      // Llenar el archivo Excel con los datos
+      resultado.rows.forEach(row => {
+        worksheet.addRow([
+          row.nombre_grupo,
+          row.avg_criterio_1,
+          row.avg_criterio_2,
+          row.avg_criterio_3,
+          row.avg_criterio_4,
+          row.avg_criterio_5,
+          row.avg_total
+        ]);
+      });
+
+      // Configurar la respuesta para descargar el archivo Excel
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', 'attachment; filename=evaluaciones.xlsx');
+
+      // Enviar el archivo Excel como respuesta
+      await workbook.xlsx.write(res);
+      res.end();
+    } else {
+      // Si el tipo no es igual a 1, enviar una respuesta indicando que el tipo no es válido
+      res.status(400).json({ mensaje: 'Tipo no válido' });
+    }
+
   } catch (error) {
     console.error('Error al obtener la información de evaluaciones, usuarios, grupos y criterios', error);
     res.status(500).json({ mensaje: 'Error interno del servidor' });
@@ -79,7 +126,7 @@ app.get('/grupos-asignaturas', async (req, res) => {
   try {
     // Consultar la información de grupos y asignaturas
     const resultado = await pool.query(
-      'SELECT grupos.id AS id_grupo, grupos.nombre AS nombre_grupo, asignaturas.nombre AS nombre_asignatura FROM grupos JOIN asignaturas ON grupos.asignatura_id = asignaturas.id'
+      'SELECT grupos.id AS id_grupo, grupos.nombre AS nombre_grupo, asignaturas.nombre AS nombre_asignatura, asignaturas.id AS  id_asignatura FROM grupos JOIN asignaturas ON grupos.asignatura_id = asignaturas.id'
     );
 
     // Enviar el resultado como respuesta
@@ -184,7 +231,7 @@ app.get('/asignaturas', async (req, res) => {
 });
 
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.port;
 app.listen(PORT, () => {
   console.log(`Servidor escuchando en el puerto ${PORT}`);
 });
