@@ -126,8 +126,16 @@ app.get('/grupos-asignaturas', async (req, res) => {
   try {
     // Consultar la información de grupos y asignaturas
     const resultado = await pool.query(
-      'SELECT grupos.id AS id_grupo, grupos.nombre AS nombre_grupo, asignaturas.nombre AS nombre_asignatura, asignaturas.id AS  id_asignatura FROM grupos JOIN asignaturas ON grupos.asignatura_id = asignaturas.id'
-    );
+      `SELECT
+      grupos.id AS id_grupo,
+      grupos.nombre AS nombre_grupo,
+      asignaturas.id AS id_asignatura,
+      asignaturas.nombre AS nombre_asignatura,
+      grupos.imagen_url,
+      grupos.descripcion
+    FROM grupos
+    JOIN asignaturas ON grupos.asignatura_id = asignaturas.id;
+    `);
 
     // Enviar el resultado como respuesta
     res.status(200).json(resultado.rows);
@@ -228,6 +236,22 @@ app.get('/asignaturas', async (req, res) => {
   const asignaturas = await pool.query('SELECT * FROM asignaturas');
 
   res.status(200).json(asignaturas.rows);
+});
+
+app.get('/grupo-por-id/:id', async (req, res) => {
+  const {id} = req.params
+  // Consultar la lista de grupos y devuelve la información del grupo que corresponda la id
+  const grupo = await pool.query('SELECT grupos.*, asignaturas.nombre AS nombre_asignatura FROM grupos JOIN asignaturas ON grupos.asignatura_id = asignaturas.id WHERE grupos.id = $1', [id]);
+
+  res.status(200).json(grupo.rows);
+});
+
+app.get('/integrantes-grupo/:id', async (req, res) => {
+  const {id} = req.params
+  // Consultar la lista de integrantes y devuelve la información de los integrantes que correspondan a la id del grupo
+  const grupo = await pool.query('SELECT * FROM integrantes WHERE grupo_id = $1', [id]);
+
+  res.status(200).json(grupo.rows);
 });
 
 
