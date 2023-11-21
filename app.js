@@ -254,6 +254,13 @@ app.get('/integrantes-grupo/:id', async (req, res) => {
   res.status(200).json(grupo.rows);
 });
 
+app.get('/integrantes', async (req, res) => {
+  // Consultar la lista de integrantes desde la base de datos
+  const usuarios = await pool.query('SELECT * FROM integrantes');
+
+  res.status(200).json(usuarios.rows);
+});
+
 
 const PORT = process.env.port;
 app.listen(PORT, () => {
