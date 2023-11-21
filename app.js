@@ -53,7 +53,7 @@ app.post('/evaluaciones', async (req, res) => {
     }
 
     // Enviar una respuesta exitosa
-    res.status(201).json({ mensaje: 'Evaluaciones realizadas con éxito' });
+    res.status(201).json({ mensaje: 'Evaluación realizada con éxito' });
   } catch (error) {
     console.error('Error al realizar la evaluación', error);
     res.status(500).json({ mensaje: 'Error interno del servidor' });
