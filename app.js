@@ -69,23 +69,24 @@ app.post('/export', async (req, res) => {
     if (tipo === 1) {
       // Consultar la información de evaluaciones, usuarios, grupos y criterios
           const resultado = await pool.query(
-      'SELECT ' +
-      'grupos.nombre AS nombre_grupo, ' +
-      'ROUND(AVG(CASE WHEN criterios.id = 1 THEN evaluaciones.puntuacion ELSE NULL END), 2) AS avg_criterio_1, ' +
-     'ROUND(AVG(CASE WHEN criterios.id = 2 THEN evaluaciones.puntuacion ELSE NULL END), 2) AS avg_criterio_2, ' +
-      'ROUND(AVG(CASE WHEN criterios.id = 3 THEN evaluaciones.puntuacion ELSE NULL END), 2) AS avg_criterio_3, ' +
-      'ROUND(AVG(CASE WHEN criterios.id = 4 THEN evaluaciones.puntuacion ELSE NULL END), 2) AS avg_criterio_4, ' +
-      'ROUND(AVG(CASE WHEN criterios.id = 5 THEN evaluaciones.puntuacion ELSE NULL END), 2) AS avg_criterio_5, ' +
-      'ROUND((AVG(CASE WHEN criterios.id = 1 THEN evaluaciones.puntuacion ELSE NULL END) + ' +
-      'AVG(CASE WHEN criterios.id = 2 THEN evaluaciones.puntuacion ELSE NULL END) + ' +
-      'AVG(CASE WHEN criterios.id = 3 THEN evaluaciones.puntuacion ELSE NULL END) + ' +
-      'AVG(CASE WHEN criterios.id = 4 THEN evaluaciones.puntuacion ELSE NULL END) + ' +
-      'AVG(CASE WHEN criterios.id = 5 THEN evaluaciones.puntuacion ELSE NULL END)) / 5, 2) AS avg_total ' +
-      'FROM evaluaciones ' +
-      'JOIN grupos ON evaluaciones.grupo_id = grupos.id ' +
-      'JOIN criterios ON evaluaciones.criterio_id = criterios.id ' +
-      'GROUP BY grupos.nombre'
+    'SELECT ' +
+    'grupos.nombre AS nombre_grupo, ' +
+    'ROUND(AVG(CASE WHEN criterios.id = 1 THEN evaluaciones.puntuacion ELSE NULL END), 2) AS avg_criterio_1, ' +
+    'ROUND(AVG(CASE WHEN criterios.id = 2 THEN evaluaciones.puntuacion ELSE NULL END), 2) AS avg_criterio_2, ' +
+    'ROUND(AVG(CASE WHEN criterios.id = 3 THEN evaluaciones.puntuacion ELSE NULL END), 2) AS avg_criterio_3, ' +
+    'ROUND(AVG(CASE WHEN criterios.id = 4 THEN evaluaciones.puntuacion ELSE NULL END), 2) AS avg_criterio_4, ' +
+    'ROUND(AVG(CASE WHEN criterios.id = 5 THEN evaluaciones.puntuacion ELSE NULL END), 2) AS avg_criterio_5, ' +
+    'ROUND((AVG(CASE WHEN criterios.id = 1 THEN evaluaciones.puntuacion ELSE NULL END) + ' +
+    'AVG(CASE WHEN criterios.id = 2 THEN evaluaciones.puntuacion ELSE NULL END) + ' +
+    'AVG(CASE WHEN criterios.id = 3 THEN evaluaciones.puntuacion ELSE NULL END) + ' +
+    'AVG(CASE WHEN criterios.id = 4 THEN evaluaciones.puntuacion ELSE NULL END) + ' +
+    'AVG(CASE WHEN criterios.id = 5 THEN evaluaciones.puntuacion ELSE NULL END)), 2) AS avg_total ' +
+    'FROM evaluaciones ' +
+    'JOIN grupos ON evaluaciones.grupo_id = grupos.id ' +
+    'JOIN criterios ON evaluaciones.criterio_id = criterios.id ' +
+    'GROUP BY grupos.nombre'
     );
+
 
       // Crear un nuevo libro de Excel y configurar la hoja de trabajo
       const workbook = new ExcelJS.Workbook();
