@@ -232,6 +232,36 @@ app.post('/registro-o-inicio-sesion', async (req, res) => {
   }
 });
 
+app.post('/update-user', async (req, res) => {
+  const { tipo_id, rut, password } = req.body;
+
+  if (tipo_id === 1) {
+    try {
+      const usuarioExistente = await pool.query('SELECT * FROM users WHERE rut = $1', [rut]);
+
+      if (usuarioExistente.rows.length > 0) {
+        if (!validarRut(rut)) {
+          return res.status(400).json({ mensaje: 'RUT inválido' });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        // Actualizar la contraseña en la base de datos
+        await pool.query('UPDATE users SET password = $1 WHERE rut = $2', [hashedPassword, rut]);
+
+        return res.status(200).json({ mensaje: 'Contraseña actualizada exitosamente' });
+      } else {
+        return res.status(401).json({ mensaje: 'Rut no existe en el sistema' });
+      }
+    } catch (error) {
+      console.error('Error al actualizar la contraseña:', error);
+      return res.status(500).json({ mensaje: 'Error interno del servidor' });
+    }
+  } else {
+    res.status(400).json({ mensaje: 'Usted no es administrador' });
+  }
+});
+
 app.get('/usuarios', async (req, res) => {
   // Consultar la lista de usuarios desde la base de datos
   const usuarios = await pool.query('SELECT * FROM users');
