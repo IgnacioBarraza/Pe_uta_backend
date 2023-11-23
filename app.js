@@ -68,23 +68,25 @@ app.post('/export', async (req, res) => {
     // Verificar si el tipo es igual a 1
     if (tipo === 1) {
       // Consultar la información de evaluaciones, usuarios, grupos y criterios
-          const resultado = await pool.query(
-    'SELECT ' +
-    'grupos.nombre AS nombre_grupo, ' +
-    'ROUND(AVG(CASE WHEN criterios.id = 1 THEN evaluaciones.puntuacion ELSE NULL END), 2) AS avg_criterio_1, ' +
-    'ROUND(AVG(CASE WHEN criterios.id = 2 THEN evaluaciones.puntuacion ELSE NULL END), 2) AS avg_criterio_2, ' +
-    'ROUND(AVG(CASE WHEN criterios.id = 3 THEN evaluaciones.puntuacion ELSE NULL END), 2) AS avg_criterio_3, ' +
-    'ROUND(AVG(CASE WHEN criterios.id = 4 THEN evaluaciones.puntuacion ELSE NULL END), 2) AS avg_criterio_4, ' +
-    'ROUND(AVG(CASE WHEN criterios.id = 5 THEN evaluaciones.puntuacion ELSE NULL END), 2) AS avg_criterio_5, ' +
-    'ROUND((AVG(CASE WHEN criterios.id = 1 THEN evaluaciones.puntuacion ELSE NULL END) + ' +
-    'AVG(CASE WHEN criterios.id = 2 THEN evaluaciones.puntuacion ELSE NULL END) + ' +
-    'AVG(CASE WHEN criterios.id = 3 THEN evaluaciones.puntuacion ELSE NULL END) + ' +
-    'AVG(CASE WHEN criterios.id = 4 THEN evaluaciones.puntuacion ELSE NULL END) + ' +
-    'AVG(CASE WHEN criterios.id = 5 THEN evaluaciones.puntuacion ELSE NULL END)), 2) AS avg_total ' +
-    'FROM evaluaciones ' +
-    'JOIN grupos ON evaluaciones.grupo_id = grupos.id ' +
-    'JOIN criterios ON evaluaciones.criterio_id = criterios.id ' +
-    'GROUP BY grupos.nombre'
+      const resultado = await pool.query(
+      'SELECT ' +
+      'grupos.nombre AS nombre_grupo, ' +
+      'asignaturas.nombre AS nombre_asignatura, ' +
+      'ROUND(AVG(CASE WHEN criterios.id = 1 THEN evaluaciones.puntuacion ELSE NULL END), 2) AS avg_criterio_1, ' +
+      'ROUND(AVG(CASE WHEN criterios.id = 2 THEN evaluaciones.puntuacion ELSE NULL END), 2) AS avg_criterio_2, ' +
+      'ROUND(AVG(CASE WHEN criterios.id = 3 THEN evaluaciones.puntuacion ELSE NULL END), 2) AS avg_criterio_3, ' +
+      'ROUND(AVG(CASE WHEN criterios.id = 4 THEN evaluaciones.puntuacion ELSE NULL END), 2) AS avg_criterio_4, ' +
+      'ROUND(AVG(CASE WHEN criterios.id = 5 THEN evaluaciones.puntuacion ELSE NULL END), 2) AS avg_criterio_5, ' +
+      'ROUND((AVG(CASE WHEN criterios.id = 1 THEN evaluaciones.puntuacion ELSE NULL END) + ' +
+      'AVG(CASE WHEN criterios.id = 2 THEN evaluaciones.puntuacion ELSE NULL END) + ' +
+      'AVG(CASE WHEN criterios.id = 3 THEN evaluaciones.puntuacion ELSE NULL END) + ' +
+      'AVG(CASE WHEN criterios.id = 4 THEN evaluaciones.puntuacion ELSE NULL END) + ' +
+      'AVG(CASE WHEN criterios.id = 5 THEN evaluaciones.puntuacion ELSE NULL END)), 2) AS avg_total ' +
+      'FROM evaluaciones ' +
+      'JOIN grupos ON evaluaciones.grupo_id = grupos.id ' +
+      'JOIN criterios ON evaluaciones.criterio_id = criterios.id ' +
+      'JOIN asignaturas ON grupos.asignatura_id = asignaturas.id ' +
+      'GROUP BY asignaturas.nombre, grupos.nombre'
     );
 
 
@@ -93,12 +95,13 @@ app.post('/export', async (req, res) => {
       const worksheet = workbook.addWorksheet('Evaluaciones');
 
       // Definir encabezados
-      worksheet.addRow(['Nombre del Grupo', 'Promedio Criterio 1', 'Promedio Criterio 2', 'Promedio Criterio 3', 'Promedio Criterio 4', 'Promedio Criterio 5', 'Promedio Total']);
+      worksheet.addRow(['Nombre del Grupo', 'Asignatura', 'Promedio Criterio 1', 'Promedio Criterio 2', 'Promedio Criterio 3', 'Promedio Criterio 4', 'Promedio Criterio 5', 'Promedio Total']);
 
       // Llenar el archivo Excel con los datos
       resultado.rows.forEach(row => {
         worksheet.addRow([
           row.nombre_grupo,
+          row.nombre_asignatura,
           row.avg_criterio_1,
           row.avg_criterio_2,
           row.avg_criterio_3,
@@ -203,7 +206,7 @@ app.post('/registro-o-inicio-sesion', async (req, res) => {
       2 = normal user
       hashedPassword: contraseña hasheada para mas seguridad
     */
-    await pool.query('INSERT INTO users (rut, tipo_id, password) VALUES ($1, $2, $3)', [rut, 1, hashedPassword]);
+    await pool.query('INSERT INTO users (rut, tipo_id, password) VALUES ($1, $2, $3)', [rut, 2, hashedPassword]);
 
     // Obtener el usuario recién registrado
     const usuarioRegistrado = await pool.query('SELECT * FROM users WHERE rut = $1', [rut]);

@@ -1,0 +1,2 @@
+docker build -t nombre_imagen .
+docker run -p 3000:3000 --env-file ruta/del/archivo/.env --name mi_contenedor nombre_imagen
