@@ -184,6 +184,7 @@ app.post('/registro-o-inicio-sesion', async (req, res) => {
           token: token,
           rut: usuario?.rut,
           userID: usuario?.id,
+          tipoID: usuario?.tipo_id,
           gruposEvaluados: gruposEvaluados.rows
         });
     } else {
@@ -229,6 +230,7 @@ app.post('/registro-o-inicio-sesion', async (req, res) => {
         token: token,
         rut: nuevoUsuario?.rut,
         userID: nuevoUsuario?.id,
+        tipoID: nuevoUsuario?.tipo_id,
         gruposEvaluados: []
       });
     }
