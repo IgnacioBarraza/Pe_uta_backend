@@ -236,18 +236,10 @@ app.post('/registro-o-inicio-sesion', async (req, res) => {
 });
 
 app.post('/update-user', async (req, res) => {
-  try {
-    const { tipo_id, rut, password } = req.body;
+  const { tipo_id, rut, password } = req.body;
 
-    if (isNaN(tipo_id) || !Number.isInteger(tipo_id)) {
-      return res.status(400).json({ mensaje: 'El tipo_id debe ser un número entero' });
-    }
-
-    console.log('tipo_id:', tipo_id);
-    console.log('rut:', rut);
-    console.log('password:', password);
-
-    if (tipo_id === 1) {
+  if (tipo_id === 1) {
+    try {
       const usuarioExistente = await pool.query('SELECT * FROM users WHERE rut = $1', [rut]);
 
       if (usuarioExistente.rows.length > 0) {
@@ -257,18 +249,19 @@ app.post('/update-user', async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
+        // Actualizar la contraseña en la base de datos
         await pool.query('UPDATE users SET password = $1 WHERE rut = $2', [hashedPassword, rut]);
 
         return res.status(200).json({ mensaje: 'Contraseña actualizada exitosamente' });
       } else {
         return res.status(401).json({ mensaje: 'Rut no existe en el sistema' });
       }
-    } else {
-      return res.status(400).json({ mensaje: 'Usted no es administrador' });
+    } catch (error) {
+      console.error('Error al actualizar la contraseña:', error);
+      return res.status(500).json({ mensaje: 'Error interno del servidor' });
     }
-  } catch (error) {
-    console.error('Error al actualizar la contraseña:', error);
-    return res.status(500).json({ mensaje: 'Error interno del servidor' });
+  } else {
+    res.status(400).json({ mensaje: 'Usted no es administrador' });
   }
 });
 
