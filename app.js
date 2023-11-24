@@ -235,6 +235,22 @@ app.post('/registro-o-inicio-sesion', async (req, res) => {
   }
 });
 
+app.post('/autentication', async (req, res) => {
+  const {id} = req.body;
+
+  const usuarioExistente = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
+
+  if (usuarioExistente.rows.length > 0) {
+    return res.status(200).json({
+      userID: usuario.id
+    });
+  }
+  else{
+    return res.status(401).json({ mensaje: 'ID no existe en el sistema' });
+  }
+  res.status(500).json({ mensaje: 'Error interno del servidor' });
+});
+
 app.post('/update-user', async (req, res) => {
   const { tipo_id, rut, password } = req.body;
 
