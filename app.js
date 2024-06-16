@@ -184,6 +184,7 @@ app.post('/login', async (req, res) => {
     rut: usuario.rut,
     userID: usuario.id,
     userName: usuario.name,
+    tipoID: usuario.tipo_id,
     gruposEvaluados: gruposEvaluados.rows
   });
 });
@@ -214,7 +215,8 @@ app.post('/registro', async (req, res) => {
     token: token,
     rut: nuevoUsuario.rut,
     userID: nuevoUsuario.id,
-    userName: nuevoUsuario.name,  
+    userName: nuevoUsuario.name,
+    tipoID: nuevoUsuario.tipo_id,  
     gruposEvaluados: []
   });
 })
