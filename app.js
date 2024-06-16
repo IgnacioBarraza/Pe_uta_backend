@@ -153,87 +153,71 @@ app.get('/grupos-asignaturas', async (req, res) => {
   }
 });
 
-app.post('/registro-o-inicio-sesion', async (req, res) => {
+// Ruta para login de usuarios
+app.post('/login', async (req, res) => {
   const { rut, password } = req.body;
-
-  // Verificar si el usuario ya existe en la base de datos
   const usuarioExistente = await pool.query('SELECT * FROM users WHERE rut = $1', [rut]);
 
-  if (usuarioExistente.rows.length > 0) {
-    // Si el usuario ya existe, intentar iniciar sesión
-    const usuario = usuarioExistente.rows[0];
-
-    // Comparar la contraseña ingresada con la contraseña hasheada en la base de datos
-    const match = await bcrypt.compare(password, usuario.password);
-
-    if (match) {
-      // Crea un token para almacenar y manejar la sesion del usuario en el front
-      const token = jwt.sign({
-          userRut: usuario.rut,
-          tipoId: usuario.tipo_id,
-          userID: usuario.id
-        },
-        'LKNNIAJ90QE209JQNIOASD0820J1390HIOASDVI',
-        { expiresIn: "2h" }
-      );  
-      // Credenciales válidas, permitir el inicio de sesión
-      req.session.usuario = usuario;
-      const gruposEvaluados = await pool.query('SELECT DISTINCT grupo_id FROM evaluaciones WHERE users_id = $1', [usuario.id]);
-      return res.status(200).json({
-          mensaje: 'Inicio de sesión exitoso',
-          token: token,
-          rut: usuario?.rut,
-          userID: usuario?.id,
-          gruposEvaluados: gruposEvaluados.rows
-        });
-    } else {
-      // Contraseña incorrecta
-      return res.status(401).json({ mensaje: 'Credenciales incorrectas' });
-    }
-  } else {
-    // Si el usuario no existe, validar el formato del RUT y calcular el dígito verificador
-    if (!validarRut(rut)) {
-      return res.status(400).json({ mensaje: 'RUT inválido' });
-    }
-
-    // Generar un hash de la contraseña antes de almacenarla en la base de datos
-    const hashedPassword = await bcrypt.hash(password, 10);
-    /* 
-      Insertar el nuevo usuario en la base de datos con la contraseña hasheada
-      rut: es el rut que se ingresa en el front
-      tipo_id:
-      1 = admin user
-      2 = normal user
-      hashedPassword: contraseña hasheada para mas seguridad
-    */
-    await pool.query('INSERT INTO users (rut, tipo_id, password) VALUES ($1, $2, $3)', [rut, 2, hashedPassword]);
-
-    // Obtener el usuario recién registrado
-    const usuarioRegistrado = await pool.query('SELECT * FROM users WHERE rut = $1', [rut]);
-    const nuevoUsuario = usuarioRegistrado.rows[0];
-
-    // Establecer la sesión del usuario recién registrado
-    req.session.usuario = nuevoUsuario;
-
-    if (nuevoUsuario) {
-      const token = jwt.sign({
-          userRut: nuevoUsuario.rut,
-          tipoId: nuevoUsuario.tipo_id,
-          userID: nuevoUsuario.id
-        },
-        'LKNNIAJ90QE209JQNIOASD0820J1390HIOASDVI',
-        { expiresIn: "2h" }
-      ); 
-      res.status(201).json({ 
-        mensaje: 'Usuario registrado con éxito y sesión iniciada',
-        token: token,
-        rut: nuevoUsuario?.rut,
-        userID: nuevoUsuario?.id,
-        gruposEvaluados: []
-      });
-    }
+  if (usuarioExistente.rows.length === 0) {
+    return res.status(404).json({ mensaje: 'Usuario no encontrado' });
   }
+
+  const usuario = usuarioExistente.rows[0];
+  const match = await bcrypt.compare(password, usuario.password);
+
+  if (!match) {
+    return res.status(401).json({ mensaje: 'Credenciales incorrectas' });
+  }
+
+  const token = jwt.sign({
+    userRut: usuario.rut,
+    tipoId: usuario.tipo_id,
+    userID: usuario.id
+  }, 'LKNNIAJ90QE209JQNIOASD0820J1390HIOASDVI', { expiresIn: "2h" });
+
+  req.session.usuario = usuario;
+  const gruposEvaluados = await pool.query('SELECT DISTINCT grupo_id FROM evaluaciones WHERE users_id = $1', [usuario.id]);
+
+  return res.status(200).json({
+    mensaje: 'Inicio de sesión exitoso',
+    token: token,
+    rut: usuario.rut,
+    userID: usuario.id,
+    userName: usuario.name,
+    gruposEvaluados: gruposEvaluados.rows
+  });
 });
+
+// Ruta para registro de usuarios
+app.post('/registro', async (req, res) => {
+  const { rut, password, name } = req.body;
+  if (!validarRut(rut)) {
+    return res.status(400).json({ mensaje: 'RUT inválido' });
+  }
+
+  const hashedPassword = await bcrypt.hash(password, 10);
+  await pool.query('INSERT INTO users (rut, tipo_id, password, name) VALUES ($1, $2, $3, $4)', [rut, 2, hashedPassword, name]);
+
+  const usuarioRegistrado = await pool.query('SELECT * FROM users WHERE rut = $1', [rut]);
+  const nuevoUsuario = usuarioRegistrado.rows[0];
+
+  req.session.usuario = nuevoUsuario;
+
+  const token = jwt.sign({
+    userRut: nuevoUsuario.rut,
+    tipoId: nuevoUsuario.tipo_id,
+    userID: nuevoUsuario.id,
+  }, 'LKNNIAJ90QE209JQNIOASD0820J1390HIOASDVI', { expiresIn: "2h" });
+
+  res.status(201).json({
+    mensaje: 'Usuario registrado con éxito y sesión iniciada',
+    token: token,
+    rut: nuevoUsuario.rut,
+    userID: nuevoUsuario.id,
+    userName: nuevoUsuario.name,  
+    gruposEvaluados: []
+  });
+})
 
 app.post('/autentication', async (req, res) => {
   const {id} = req.body;
