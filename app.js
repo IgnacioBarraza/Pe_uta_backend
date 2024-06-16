@@ -173,7 +173,7 @@ app.post('/login', async (req, res) => {
     userRut: usuario.rut,
     tipoId: usuario.tipo_id,
     userID: usuario.id
-  }, 'LKNNIAJ90QE209JQNIOASD0820J1390HIOASDVI', { expiresIn: "2h" });
+  }, 'LKNNIAJ90QE209JQNIOASD0820J1390HIOASDVI', { expiresIn: "4h" });
 
   req.session.usuario = usuario;
   const gruposEvaluados = await pool.query('SELECT DISTINCT grupo_id FROM evaluaciones WHERE users_id = $1', [usuario.id]);
@@ -207,7 +207,7 @@ app.post('/registro', async (req, res) => {
     userRut: nuevoUsuario.rut,
     tipoId: nuevoUsuario.tipo_id,
     userID: nuevoUsuario.id,
-  }, 'LKNNIAJ90QE209JQNIOASD0820J1390HIOASDVI', { expiresIn: "2h" });
+  }, 'LKNNIAJ90QE209JQNIOASD0820J1390HIOASDVI', { expiresIn: "4h" });
 
   res.status(201).json({
     mensaje: 'Usuario registrado con éxito y sesión iniciada',
