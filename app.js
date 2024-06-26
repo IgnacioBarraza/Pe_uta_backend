@@ -267,6 +267,62 @@ app.post('/update-user', async (req, res) => {
   }
 });
 
+app.post('/agregar-integrantes', async (req, res) => {
+  let integrantes = req.body;
+
+  // Asegúrate de que siempre sea un array para simplificar el proceso
+  if (!Array.isArray(integrantes)) {
+    integrantes = [integrantes];
+  }
+
+  // Validar que todos los integrantes tengan los campos necesarios
+  for (const integrante of integrantes) {
+    const { nombre, apellidos, grupo_id } = integrante;
+    if (!nombre || !apellidos || !grupo_id) {
+      return res.status(400).json({ mensaje: 'Todos los campos son obligatorios para cada integrante' });
+    }
+  }
+
+  const values = [];
+  const queryText = 'INSERT INTO integrantes (nombre, apellidos, grupo_id) VALUES ';
+
+  // Construir la consulta de inserción múltiple
+  const queryParams = integrantes.map((integrante, index) => {
+    const { nombre, apellidos, grupo_id } = integrante;
+    values.push(nombre, apellidos, grupo_id);
+    return `($${index * 3 + 1}, $${index * 3 + 2}, $${index * 3 + 3})`;
+  }).join(', ');
+
+  try {
+    const result = await pool.query(queryText + queryParams + ' RETURNING *', values);
+
+    res.status(201).json({ mensaje: 'Integrante(s) agregado(s) exitosamente', integrantes: result.rows });
+  } catch (error) {
+    console.error('Error al agregar integrante(s):', error);
+    res.status(500).json({ mensaje: 'Error interno del servidor' });
+  }
+});
+
+app.post('/agregar-proyecto', async (req, res) => {
+  const { nombre, asignatura_id, imagen_url, descripcion } = req.body;
+
+  if (!nombre || !asignatura_id || !imagen_url || !descripcion) {
+    return res.status(400).json({ mensaje: 'Todos los campos son obligatorios' });
+  }
+
+  try {
+    const nuevoProyecto = await pool.query(
+      'INSERT INTO grupos (nombre, asignatura_id, imagen_url, descripcion) VALUES ($1, $2, $3, $4) RETURNING *',
+      [nombre, asignatura_id, imagen_url, descripcion]
+    );
+
+    res.status(201).json({ mensaje: 'Proyecto agregado exitosamente', proyecto: nuevoProyecto.rows[0] });
+  } catch (error) {
+    console.error('Error al agregar proyecto:', error);
+    res.status(500).json({ mensaje: 'Error interno del servidor' });
+  }
+});
+
 app.get('/usuarios', async (req, res) => {
   // Consultar la lista de usuarios desde la base de datos
   const usuarios = await pool.query('SELECT * FROM users');
