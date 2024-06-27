@@ -276,10 +276,16 @@ app.post('/agregar-integrantes', async (req, res) => {
   }
 
   // Validar que todos los integrantes tengan los campos necesarios
-  for (const integrante of integrantes) {
+  for (const [index, integrante] of integrantes.entries()) {
     const { nombre, apellidos, grupo_id } = integrante;
-    if (!nombre || !apellidos || !grupo_id) {
-      return res.status(400).json({ mensaje: 'Todos los campos son obligatorios para cada integrante' });
+    if (!nombre) {
+      return res.status(400).json({ mensaje: `El campo 'nombre' es obligatorio para el integrante ${index + 1}` });
+    }
+    if (!apellidos) {
+      return res.status(400).json({ mensaje: `El campo 'apellidos' es obligatorio para el integrante ${index + 1}` });
+    }
+    if (!grupo_id) {
+      return res.status(400).json({ mensaje: `El campo 'grupo_id' es obligatorio para el integrante ${index + 1}` });
     }
   }
 
